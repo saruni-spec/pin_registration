@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
     //format the data into a readable string format
     const formattedData = data.assesments
       .map((assessment) => {
-        return `Item ID: ${assessment.metadata.f88ItemId}, Tax Type: ${assessment.tax_type}, Tax Rate: ${assessment.tax_rate}%, Tax Base: ${assessment.tax_base}, Tax Amount: ${assessment.tax_amount}`;
+        return `Item ID: ${assessment.metadata.f88ItemId}, Tax Amount: ${assessment.tax_amount}`;
       })
       .join("\n");
 
