@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Atomic fetch + delete in one transaction
+    // Atomic fetch + delete
     const [savedItems] = await prisma.$transaction([
       prisma.savedItem.findMany({
         where: { phone: body.phone },
@@ -15,17 +15,31 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    // Transform items
-    const items = savedItems.map((item) => ({
-      type: item.category,
-      hscode: item.hsCode,
-      description: item.item,
-      quantity: item.quantity,
-      value: item.amount,
-      currency: item.currency,
-    }));
+    const items = savedItems.map((item) => {
+      let description = item.item;
+      let value = item.amount;
 
-    // Convert to readable text
+      // Special cases
+      if (item.item === "Currency over $10,000") {
+        description = "Currency over $10,000";
+        value = item.valueOfFund ?? item.amount; // fallback if null
+      }
+
+      if (item.item === "Good for Re-importation") {
+        description = "Good for Re-importation";
+        // value stays item.amount
+      }
+
+      return {
+        type: item.category,
+        hscode: item.hsCode,
+        description,
+        quantity: item.quantity,
+        value,
+        currency: item.currency,
+      };
+    });
+
     const itemsString = items
       .map(
         (item, index) =>
@@ -38,11 +52,7 @@ export async function POST(req: NextRequest) {
       .join("\n");
 
     return NextResponse.json(
-      {
-        message: "Success",
-        itemsString,
-        items,
-      },
+      { message: "Success", itemsString, items },
       { status: 200 }
     );
   } catch (error) {
