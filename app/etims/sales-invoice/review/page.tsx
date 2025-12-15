@@ -73,7 +73,7 @@ export default function SalesInvoiceReview() {
       step="Step 3 of 3"
       onBack={() => router.push('/etims/sales-invoice/details')}
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Buyer Info */}
         {invoice.buyer && (
           <IdentityStrip 
@@ -82,30 +82,45 @@ export default function SalesInvoiceReview() {
           />
         )}
 
-        {/* Items Summary */}
+        {/* Items Summary - Table Format */}
         <Card>
-          <h3 className="text-gray-900 font-medium mb-3">Items ({invoice.items?.length || 0})</h3>
-          <div className="space-y-3">
-            {invoice.items?.map((item) => (
-              <div key={item.id} className="pb-3 border-b border-gray-200 last:border-0 last:pb-0">
-                <div className="flex items-start justify-between gap-3 mb-1">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-                        {item.type}
-                      </span>
-                      <h4 className="text-gray-900 font-medium">{item.name}</h4>
-                    </div>
-                    {item.description && (
-                      <p className="text-sm text-gray-600">{item.description}</p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700">
-                  KES {item.unitPrice.toLocaleString()} × {item.quantity} = KES {(item.unitPrice * item.quantity).toLocaleString()}
-                </p>
-              </div>
-            ))}
+          <h3 className="text-sm text-gray-900 font-medium mb-3">
+            Products/Services ({invoice.items?.length || 0})
+          </h3>
+          <div className="overflow-x-auto -mx-4 px-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 text-xs text-gray-500 font-medium">Name</th>
+                  <th className="text-right py-2 text-xs text-gray-500 font-medium">Price</th>
+                  <th className="text-center py-2 text-xs text-gray-500 font-medium">Qty</th>
+                  <th className="text-right py-2 text-xs text-gray-500 font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items?.map((item) => (
+                  <tr key={item.id} className="border-b border-gray-100 last:border-0">
+                    <td className="py-2.5">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900 font-medium">{item.name}</span>
+                        {item.description && (
+                          <span className="text-xs text-gray-500 line-clamp-1">{item.description}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-right py-2.5 text-gray-700 whitespace-nowrap">
+                      KES {item.unitPrice.toLocaleString()}
+                    </td>
+                    <td className="text-center py-2.5 text-gray-700">
+                      {item.quantity}
+                    </td>
+                    <td className="text-right py-2.5 text-gray-900 font-medium whitespace-nowrap">
+                      KES {(item.unitPrice * item.quantity).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
 

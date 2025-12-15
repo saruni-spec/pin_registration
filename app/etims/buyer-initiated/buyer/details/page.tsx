@@ -230,7 +230,7 @@ export default function BuyerInitiatedSellerDetails() {
         )}
 
         <Button onClick={handleReview} disabled={items.length === 0}>
-          Review Invoice
+          Continue
         </Button>
       </div>
     </Layout>

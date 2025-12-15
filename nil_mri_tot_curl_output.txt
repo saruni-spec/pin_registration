@@ -90,6 +90,3 @@ curl -X POST 'https://kratest.pesaflow.com/api/ussd/file-return' \
 Response:
 {"errors":{"detail":"Internal Server Error"}}
 
-==========================================
-TEST COMPLETE
-==========================================

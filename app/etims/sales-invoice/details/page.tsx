@@ -6,6 +6,8 @@ import { Layout, Card, Input, Button, TotalsCard } from '../../_components/Layou
 import { saveSalesInvoice, getSalesInvoice, calculateTotals, InvoiceItem } from '../../_lib/store';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
+const MAX_DESCRIPTION_LENGTH = 600;
+
 export default function SalesInvoiceDetails() {
   const router = useRouter();
   const [itemType, setItemType] = useState<'product' | 'service'>('product');
@@ -26,6 +28,13 @@ export default function SalesInvoiceDetails() {
   }, []);
 
   const totals = calculateTotals(items);
+
+  const handleDescriptionChange = (value: string) => {
+    // Limit description to 600 characters
+    if (value.length <= MAX_DESCRIPTION_LENGTH) {
+      setDescription(value);
+    }
+  };
 
   const handleAddItem = () => {
     if (!itemName.trim() || !unitPrice || parseFloat(unitPrice) <= 0 || parseInt(quantity) <= 0) {
@@ -99,14 +108,14 @@ export default function SalesInvoiceDetails() {
       step="Step 2 of 3"
       onBack={() => router.push('/etims/sales-invoice/buyer')}
     >
-      <div className="space-y-4">
-        {/* Item Type */}
+      <div className="space-y-3">
+        {/* Item Type - Compact for mobile */}
         <Card>
-          <p className="text-sm text-gray-700 mb-3 font-medium">Item Type</p>
-          <div className="flex gap-3">
+          <p className="text-xs text-gray-600 mb-2 font-medium">Item Type</p>
+          <div className="flex gap-2">
             <button
               onClick={() => setItemType('product')}
-              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors font-medium ${
+              className={`flex-1 py-2 px-3 rounded-lg border-2 transition-colors text-sm font-medium ${
                 itemType === 'product'
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
@@ -116,7 +125,7 @@ export default function SalesInvoiceDetails() {
             </button>
             <button
               onClick={() => setItemType('service')}
-              className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors font-medium ${
+              className={`flex-1 py-2 px-3 rounded-lg border-2 transition-colors text-sm font-medium ${
                 itemType === 'service'
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
@@ -127,10 +136,10 @@ export default function SalesInvoiceDetails() {
           </div>
         </Card>
 
-        {/* Item Details */}
+        {/* Item Details - Compact inputs for mobile */}
         <Card>
-          <h3 className="text-gray-900 font-medium mb-4">Item Details</h3>
-          <div className="space-y-4">
+          <h3 className="text-sm text-gray-900 font-medium mb-3">Item Details</h3>
+          <div className="space-y-3">
             <Input
               label="Item Name"
               value={itemName}
@@ -138,39 +147,57 @@ export default function SalesInvoiceDetails() {
               placeholder="Enter item name"
               required
             />
-            <Input
-              label="Description"
-              value={description}
-              onChange={setDescription}
-              placeholder="Optional description"
-            />
-            <Input
-              label="Unit Price (KES)"
-              value={unitPrice}
-              onChange={setUnitPrice}
-              placeholder="0.00"
-              type="number"
-              required
-            />
-            <Input
-              label="Quantity"
-              value={quantity}
-              onChange={setQuantity}
-              placeholder="1"
-              type="number"
-              required
-            />
+            
+            {/* Description with character counter */}
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">
+                Description <span className="text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => handleDescriptionChange(e.target.value)}
+                placeholder="Optional description"
+                maxLength={MAX_DESCRIPTION_LENGTH}
+                rows={2}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              />
+              <p className={`text-xs mt-1 text-right ${
+                description.length >= MAX_DESCRIPTION_LENGTH ? 'text-red-500' : 'text-gray-400'
+              }`}>
+                {description.length}/{MAX_DESCRIPTION_LENGTH}
+              </p>
+            </div>
+
+            {/* Price and Quantity in a row for mobile */}
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                label="Unit Price (KES)"
+                value={unitPrice}
+                onChange={setUnitPrice}
+                placeholder="0.00"
+                type="number"
+                required
+              />
+              <Input
+                label="Quantity"
+                value={quantity}
+                onChange={setQuantity}
+                placeholder="1"
+                type="number"
+                required
+              />
+            </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <Button onClick={handleAddItem}>
               {editingId ? (
                 <>
-                  <Edit2 className="w-4 h-4 inline mr-2" />
+                  <Edit2 className="w-4 h-4 inline mr-1" />
                   Update Item
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4 inline mr-2" />
+                  <Plus className="w-4 h-4 inline mr-1" />
                   Add Item
                 </>
               )}
@@ -178,47 +205,63 @@ export default function SalesInvoiceDetails() {
           </div>
         </Card>
 
-        {/* Items List */}
+        {/* Items List - Compact table format */}
         {items.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-gray-900 font-medium">Items ({items.length})</h3>
-            {items.map((item) => (
-              <Card key={item.id} className="bg-gray-50">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-                        {item.type}
-                      </span>
-                      <h4 className="text-gray-900 font-medium">{item.name}</h4>
-                    </div>
-                    {item.description && (
-                      <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                    )}
-                    <p className="text-sm text-gray-700">
-                      KES {item.unitPrice.toLocaleString()} × {item.quantity} = KES {(item.unitPrice * item.quantity).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditItem(item)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      aria-label="Edit item"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      aria-label="Remove item"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <h3 className="text-sm text-gray-900 font-medium mb-2">Items ({items.length})</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 text-xs text-gray-500 font-medium">Item</th>
+                    <th className="text-right py-2 text-xs text-gray-500 font-medium">Price</th>
+                    <th className="text-center py-2 text-xs text-gray-500 font-medium">Qty</th>
+                    <th className="text-right py-2 text-xs text-gray-500 font-medium">Total</th>
+                    <th className="text-right py-2 text-xs text-gray-500 font-medium w-16"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-100 last:border-0">
+                      <td className="py-2">
+                        <div className="flex flex-col">
+                          <span className="text-gray-900 font-medium text-xs">{item.name}</span>
+                          <span className="text-xs text-gray-400">{item.type}</span>
+                        </div>
+                      </td>
+                      <td className="text-right py-2 text-xs text-gray-700">
+                        {item.unitPrice.toLocaleString()}
+                      </td>
+                      <td className="text-center py-2 text-xs text-gray-700">
+                        {item.quantity}
+                      </td>
+                      <td className="text-right py-2 text-xs text-gray-900 font-medium">
+                        {(item.unitPrice * item.quantity).toLocaleString()}
+                      </td>
+                      <td className="text-right py-2">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEditItem(item)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            aria-label="Edit item"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
 
         {/* Totals */}
@@ -228,7 +271,7 @@ export default function SalesInvoiceDetails() {
 
         {/* Review Button */}
         <Button onClick={handleReview} disabled={items.length === 0}>
-          Review Invoice
+          Continue
         </Button>
       </div>
     </Layout>
