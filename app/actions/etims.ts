@@ -163,7 +163,8 @@ export async function submitInvoice(
       request,
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-forwarded-for': 'triple_2_ussd'
         },
         timeout: 30000
       }
