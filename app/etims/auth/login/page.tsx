@@ -120,7 +120,7 @@ function LoginContent() {
 
         {/* OTP Input */}
         <Card>
-          <label className="block text-xs text-gray-600 font-medium mb-2">Enter OTP</label>
+          <label className="block text-xs text-gray-600 font-medium mb-2">Enter OTP <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={otp}

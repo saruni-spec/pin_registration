@@ -54,11 +54,12 @@ export default function SalesInvoiceDetails() {
       return;
     }
     
-    const qty = parseInt(quantity);
+    const qty = parseFloat(quantity);
     if (isNaN(qty) || qty <= 0) {
-      alert('Invalid quantity. Please enter a quantity of at least 1.');
+      alert('Invalid quantity. Please enter a quantity greater than 0.');
       return;
     }
+    const roundedQty = Math.round(qty * 100) / 100; // Limit to 2dp
 
     const newItem: InvoiceItem = {
       id: editingId || Date.now().toString(),
@@ -66,7 +67,7 @@ export default function SalesInvoiceDetails() {
       name: itemName.trim(),
       description: description.trim() || undefined,
       unitPrice: price,
-      quantity: qty,
+      quantity: roundedQty,
     };
 
     if (editingId) {
@@ -202,6 +203,8 @@ export default function SalesInvoiceDetails() {
                 onChange={setQuantity}
                 placeholder="1"
                 type="number"
+                step="0.01"
+                min="0.01"
                 required
               />
             </div>

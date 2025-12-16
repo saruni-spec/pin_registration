@@ -119,6 +119,8 @@ export function Input({
   type = 'text',
   required = false,
   disabled = false,
+  step,
+  min,
 }: {
   label: string;
   value: string | number;
@@ -127,11 +129,13 @@ export function Input({
   type?: string;
   required?: boolean;
   disabled?: boolean;
+  step?: string;
+  min?: string;
 }) {
   return (
     <div>
       <label className="block text-xs text-gray-600 mb-1 font-medium">
-        {label} {required && <span className="text-[var(--kra-red)]">*</span>}
+        {label} {required ? <span className="text-[var(--kra-red)]">*</span> : <span className="text-gray-400">(optional)</span>}
       </label>
       <input
         type={type}
@@ -140,6 +144,8 @@ export function Input({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        step={step}
+        min={min}
         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--kra-red)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
       />
     </div>

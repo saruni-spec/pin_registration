@@ -616,33 +616,34 @@ export interface LookupByIdResult {
 }
 
 /**
- * Lookup user details by ID number
+ * Lookup user details by ID number (using PIN or ID lookup API)
  */
 export async function lookupById(idNumber: string): Promise<LookupByIdResult> {
-  if (!idNumber || !/^\d{6,8}$/.test(idNumber.trim())) {
-    return { success: false, error: 'Invalid ID number format (6-8 digits)' };
+  if (!idNumber || idNumber.trim().length < 6) {
+    return { success: false, error: 'ID number must be at least 6 characters' };
   }
 
   console.log('Looking up ID:', idNumber);
 
   try {
+    // Using the buyer-initiated/lookup API which works with both PIN and ID
     const response = await axios.post(
-      `${BASE_URL}/id-lookup`,
-      { id_number: idNumber.trim() },
+      `${BASE_URL}/buyer-initiated/lookup`,
+      { pin_or_id: idNumber.trim() },
       { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
     );
 
     console.log('ID lookup response:', JSON.stringify(response.data, null, 2));
 
-    // code 3 = valid, code 4 = invalid
-    if (response.data.code === 3) {
+    // API returns { code: 3, name: "...", pin: "..." } on success
+    if (response.data && (response.data.pin || response.data.code === 3 || response.data.name)) {
       return {
         success: true,
-        idNumber: response.data.id_number,
+        idNumber: idNumber.trim(),
         name: response.data.name,
       };
     } else {
-      return { success: false, error: response.data.message || 'Invalid ID number' };
+      return { success: false, error: response.data.message || 'ID not found' };
     }
   } catch (error: any) {
     console.error('ID lookup error:', error.response?.data || error.message);

@@ -119,7 +119,7 @@ export default function SalesInvoiceBuyer() {
                 
                 {/* Buyer Name Input */}
                 <Input
-                  label="Buyer Name (optional)"
+                  label="Buyer Name"
                   value={buyerName}
                   onChange={setBuyerName}
                   placeholder="Enter buyer's name"

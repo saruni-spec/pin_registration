@@ -9,7 +9,7 @@ import { Plus, Edit2, Trash2, Calendar } from 'lucide-react';
 export default function BuyerInitiatedDetails() {
   const router = useRouter();
   const [sellerName, setSellerName] = useState('');
-  const [itemMode, setItemMode] = useState<'single' | 'multiple'>('single');
+
   const [itemType, setItemType] = useState<'product' | 'service'>('product');
   const [itemName, setItemName] = useState('');
   const [description, setDescription] = useState('');
@@ -37,14 +37,15 @@ export default function BuyerInitiatedDetails() {
     if (!itemName.trim()) { alert('Item name required'); return; }
     const price = parseFloat(unitPrice);
     if (isNaN(price) || price <= 0) { alert('Valid price required'); return; }
-    const qty = parseInt(quantity);
-    if (isNaN(qty) || qty <= 0) { alert('Valid quantity required'); return; }
+    const qty = parseFloat(quantity);
+    if (isNaN(qty) || qty <= 0) { alert('Valid quantity required (greater than 0)'); return; }
+    const roundedQty = Math.round(qty * 100) / 100; // Limit to 2dp
 
     const newItem: InvoiceItem = {
       id: editingId || Date.now().toString(),
       type: itemType, name: itemName.trim(),
       description: description.trim() || undefined,
-      unitPrice: price, quantity: qty,
+      unitPrice: price, quantity: roundedQty,
     };
 
     if (editingId) {
@@ -54,11 +55,6 @@ export default function BuyerInitiatedDetails() {
       setItems([...items, newItem]);
     }
     setItemName(''); setDescription(''); setUnitPrice(''); setQuantity('1'); setItemType('product');
-
-    if (itemMode === 'single') {
-      saveBuyerInitiated({ items: [newItem], amount: newItem.unitPrice * newItem.quantity, taxType: 'non-vat' });
-      router.push('/etims/buyer-initiated/buyer/review');
-    }
   };
 
   const handleEditItem = (item: InvoiceItem) => {
@@ -90,16 +86,22 @@ export default function BuyerInitiatedDetails() {
           <p className="text-gray-400 text-xs">Step 3/4 • Seller: {sellerName}</p>
         </div>
 
-        {/* Item Mode + Tax */}
+        {/* Item Type + Tax */}
         <div className="grid grid-cols-2 gap-2">
           <Card>
-            <p className="text-[10px] text-gray-500 mb-1.5">MODE</p>
-            <div className="flex gap-1">
-              {(['single', 'multiple'] as const).map(mode => (
-                <button key={mode} onClick={() => setItemMode(mode)}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium ${itemMode === mode ? 'bg-[var(--kra-red)] text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  {mode === 'single' ? 'Single' : 'Multiple'}
-                </button>
+            <p className="text-[10px] text-gray-500 mb-1.5">ITEM TYPE</p>
+            <div className="flex gap-3">
+              {(['product', 'service'] as const).map(type => (
+                <label key={type} className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="itemType"
+                    checked={itemType === type}
+                    onChange={() => setItemType(type)}
+                    className="w-3.5 h-3.5 text-[var(--kra-red)]"
+                  />
+                  <span className="text-xs text-gray-700">{type === 'product' ? 'Product' : 'Service'}</span>
+                </label>
               ))}
             </div>
           </Card>
@@ -108,25 +110,6 @@ export default function BuyerInitiatedDetails() {
             <div className="py-1.5 bg-gray-100 rounded text-center text-xs font-medium text-gray-700">Non-VAT</div>
           </Card>
         </div>
-
-        {/* Item Type */}
-        <Card>
-          <p className="text-[10px] text-gray-500 mb-1.5">ITEM TYPE</p>
-          <div className="flex gap-4">
-            {(['product', 'service'] as const).map(type => (
-              <label key={type} className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="itemType"
-                  checked={itemType === type}
-                  onChange={() => setItemType(type)}
-                  className="w-4 h-4 text-[var(--kra-red)]"
-                />
-                <span className="text-sm text-gray-700">{type === 'product' ? 'Product' : 'Service'}</span>
-              </label>
-            ))}
-          </div>
-        </Card>
 
         {/* Form */}
         <Card>
@@ -137,7 +120,7 @@ export default function BuyerInitiatedDetails() {
                 className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 mb-1">Description <span className="text-gray-400">({description.length}/600)</span></label>
+              <label className="block text-[10px] text-gray-500 mb-1">Description <span className="text-gray-400">(optional - {description.length}/600)</span></label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value.slice(0, 600))} rows={2}
                 className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg resize-none" />
             </div>
@@ -153,19 +136,19 @@ export default function BuyerInitiatedDetails() {
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1">Quantity <span className="text-red-500">*</span></label>
-                <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="1" min="1"
+                <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="1" min="0.01" step="0.01"
                   className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg" />
               </div>
             </div>
           </div>
           <button onClick={handleAddItem}
             className="w-full mt-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 flex items-center justify-center gap-1">
-            {editingId ? <><Edit2 className="w-3.5 h-3.5" />Update</> : <><Plus className="w-3.5 h-3.5" />{itemMode === 'single' ? 'Add & Continue' : 'Add Item'}</>}
+            {editingId ? <><Edit2 className="w-3.5 h-3.5" />Update</> : <><Plus className="w-3.5 h-3.5" />Add Item</>}
           </button>
         </Card>
 
-        {/* Items Table (multiple mode) */}
-        {itemMode === 'multiple' && items.length > 0 && (
+        {/* Items Table */}
+        {items.length > 0 && (
           <Card>
             <p className="text-xs font-medium text-gray-700 mb-2">Items ({items.length})</p>
             <table className="w-full text-xs">
@@ -200,7 +183,7 @@ export default function BuyerInitiatedDetails() {
           </Card>
         )}
 
-        {itemMode === 'multiple' && items.length > 0 && (
+        {items.length > 0 && (
           <Button onClick={handleContinue}>Continue</Button>
         )}
       </div>
