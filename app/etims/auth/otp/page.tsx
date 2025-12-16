@@ -116,6 +116,11 @@ function OTPContent() {
   return (
     <Layout title="Verify OTP" showHeader={false} showFooter={false} onBack={() => router.back()}>
       <div className="space-y-4">
+        {/* Logo */}
+        <div className="flex justify-center py-2">
+          <img src="/kra_logo.png" alt="KRA Logo" className="h-12 w-auto" />
+        </div>
+
         {/* Header */}
         <div className="bg-[var(--kra-black)] rounded-xl p-4 text-white">
           <h1 className="text-base font-semibold">OTP Verification</h1>

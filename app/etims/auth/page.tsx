@@ -66,8 +66,8 @@ function AuthContent() {
       <div className="min-h-[80vh] flex flex-col justify-center space-y-4">
         {/* Header */}
         <div className="text-center mb-4">
-          <div className="w-16 h-16 bg-[var(--kra-red)] rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-white text-2xl font-bold">KRA</span>
+          <div className="flex justify-center mb-3">
+            <img src="/kra_logo.png" alt="KRA Logo" className="h-16 w-auto" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">eTIMS Service</h1>
           <p className="text-sm text-gray-500">Kenya Revenue Authority</p>

@@ -85,6 +85,11 @@ function LoginContent() {
   return (
     <Layout title="Verify Phone" showHeader={false} showFooter={false} onBack={() => router.push('/etims/auth')}>
       <div className="space-y-4">
+        {/* Logo */}
+        <div className="flex justify-center py-2">
+          <img src="/kra_logo.png" alt="KRA Logo" className="h-12 w-auto" />
+        </div>
+
         {/* Header */}
         <div className="bg-[var(--kra-black)] rounded-xl p-4 text-white">
           <div className="flex items-center gap-3">
