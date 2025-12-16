@@ -522,6 +522,8 @@ export async function processBuyerInvoice(
       }
     );
 
+    console.log('Process invoice response:', JSON.stringify(response.data, null, 2));
+
     return {
       success: true,
       message: response.data.message || 'Action submitted successfully'

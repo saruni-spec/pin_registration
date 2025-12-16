@@ -48,8 +48,19 @@ export function Layout({ children, title, step, onBack, showMenu = false, showHe
   };
 
   const handleConnectAgent = () => {
-    // Mock: In production, this would open a chat or call interface
-    alert('Connecting to a support agent...\n\nThis feature will open a chat or call with a KRA support agent.');
+    // WhatsApp number for eTIMS support (without + symbol)
+    const whatsappNumber = '254708427694';
+    const message = encodeURIComponent('Connect to agent');
+    // Open WhatsApp with pre-filled message
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const handleMainMenu = () => {
+    // WhatsApp number for eTIMS support (without + symbol)
+    const whatsappNumber = '254708427694';
+    const message = encodeURIComponent('Main menu');
+    // Open WhatsApp with pre-filled message
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };
 
   return (
@@ -97,7 +108,7 @@ export function Layout({ children, title, step, onBack, showMenu = false, showHe
           <div className="max-w-4xl mx-auto px-3 py-2">
             <div className="grid grid-cols-3 gap-2">
               <button 
-                onClick={() => router.push('/etims')}
+                onClick={handleMainMenu}
                 className="flex flex-col items-center justify-center gap-0.5 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-[10px]"
               >
                 <Home className="w-4 h-4" />
