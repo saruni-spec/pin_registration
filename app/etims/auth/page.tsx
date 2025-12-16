@@ -108,7 +108,7 @@ function AuthContent() {
 
         {/* Info */}
         <p className="text-center text-xs text-gray-400">
-          Enter your registered phone number to access eTIMS services
+          Continue to access eTIMS services
         </p>
       </div>
     </Layout>
