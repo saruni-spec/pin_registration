@@ -655,6 +655,7 @@ export interface LookupByIdResult {
   success: boolean;
   idNumber?: string;
   name?: string;
+  pin?: string;
   error?: string;
 }
 
@@ -684,6 +685,7 @@ export async function lookupById(idNumber: string): Promise<LookupByIdResult> {
         success: true,
         idNumber: idNumber.trim(),
         name: response.data.name,
+        pin: response.data.pin,
       };
     } else {
       return { success: false, error: response.data.message || 'ID not found' };

@@ -2,28 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Layout, Card, Select, Button } from '../../_components/Layout';
-import { getCreditNote, saveCreditNote, CreditNoteData } from '../../_lib/store';
+import { Layout, Card, Button } from '../../_components/Layout';
+import { getCreditNote, CreditNoteData } from '../../_lib/store';
 
-const reasonOptions = [
-  { value: 'missing_quantity', label: 'Missing Quantity' },
-  { value: 'missing_data', label: 'Missing Data' },
-  { value: 'damaged', label: 'Damaged' },
-  { value: 'wasted', label: 'Wasted' },
-  { value: 'raw_material_shortage', label: 'Raw Material Shortage' },
-  { value: 'refund', label: 'Refund' },
-];
+const reasonLabels: Record<string, string> = {
+  missing_quantity: 'Missing Quantity',
+  missing_data: 'Missing Data',
+  damaged: 'Damaged',
+  wasted: 'Wasted',
+  raw_material_shortage: 'Raw Material Shortage',
+  refund: 'Refund',
+};
 
 export default function CreditNoteFull() {
   const router = useRouter();
   const [creditNote, setCreditNote] = useState<CreditNoteData | null>(null);
-  const [reason, setReason] = useState('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const saved = getCreditNote();
-    if (!saved || !saved.invoice || saved.type !== 'full') {
+    if (!saved || !saved.invoice || saved.type !== 'full' || !saved.reason) {
       router.push('/etims/credit-note/search');
       return;
     }
@@ -31,12 +30,6 @@ export default function CreditNoteFull() {
   }, [router]);
 
   const handleReview = () => {
-    if (!reason) {
-      alert('Please select a reason for the credit note');
-      return;
-    }
-
-    saveCreditNote({ reason });
     router.push('/etims/credit-note/review');
   };
 
@@ -64,6 +57,12 @@ export default function CreditNoteFull() {
                 KES {creditNote.invoice.total.toLocaleString()}
               </span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Reason:</span>
+              <span className="text-gray-900 font-medium">
+                {creditNote.reason ? (reasonLabels[creditNote.reason] || creditNote.reason) : 'N/A'}
+              </span>
+            </div>
           </div>
         </Card>
 
@@ -73,17 +72,7 @@ export default function CreditNoteFull() {
           </p>
         </Card>
 
-        <Card>
-          <Select
-            label="Reason for Credit Note"
-            value={reason}
-            onChange={setReason}
-            options={reasonOptions}
-            required
-          />
-        </Card>
-
-        <Button onClick={handleReview} disabled={!reason}>
+        <Button onClick={handleReview}>
           Review Credit Note
         </Button>
       </div>

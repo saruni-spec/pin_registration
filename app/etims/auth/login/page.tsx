@@ -7,6 +7,8 @@ import { generateOTP, verifyOTP } from '../../../actions/etims';
 import { saveUserSession } from '../../_lib/store';
 import { Loader2, MessageSquare, Shield } from 'lucide-react';
 
+const whatsappNumber = '254708427694';
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -154,8 +156,32 @@ function LoginContent() {
         )}
 
         <Button onClick={handleVerifyOTP} disabled={loading || !otp}>
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Verifying...</> : 'Continue'}
+          {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Verifying...</> : 'Log In'}
         </Button>
+
+        {/* Additional Actions */}
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          <button 
+            onClick={() => {
+              
+              const message = encodeURIComponent('Main menu');
+              window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+            }}
+            className="flex flex-col items-center justify-center gap-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-xs"
+          >
+            Go Main Menu
+          </button>
+          <button 
+            onClick={() => {
+             
+              const message = encodeURIComponent('Connect to agent');
+              window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+            }}
+            className="flex flex-col items-center justify-center gap-1 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-700 font-medium text-xs"
+          >
+            Connect to an Agent
+          </button>
+        </div>
       </div>
     </Layout>
   );

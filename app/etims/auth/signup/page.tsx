@@ -3,8 +3,9 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout, Card, Button } from '../../_components/Layout';
+import { IDInput } from '../../../_components/KRAInputs';
 import { lookupById } from '../../../actions/etims';
-import { Loader2, User, CreditCard } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 
 function SignupContent() {
   const router = useRouter();
@@ -14,31 +15,31 @@ function SignupContent() {
   const [step, setStep] = useState(1); // 1: ID input, 2: Preview, 3: OTP
   const [idNumber, setIdNumber] = useState('');
   const [firstName, setFirstName] = useState('');
-  const [userDetails, setUserDetails] = useState<{ idNumber: string; name: string } | null>(null);
+  const [userDetails, setUserDetails] = useState<{ idNumber: string; name: string; pin?: string } | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isIdValid, setIsIdValid] = useState(false);
 
   const handleValidateId = async () => {
     setError('');
     if (!idNumber.trim()) { setError('Enter ID number'); return; }
     if (!/^\d{6,8}$/.test(idNumber.trim())) { setError('ID must be 6-8 digits'); return; }
+    if (!firstName.trim()) { setError('Enter your first name'); return; }
 
     setLoading(true);
     try {
       const result = await lookupById(idNumber.trim());
       if (result.success && result.name) {
-        // Verify first name matches (optional validation)
-        if (firstName.trim()) {
-          const apiFirstName = result.name.split(' ')[0].toLowerCase();
-          const inputFirstName = firstName.trim().toLowerCase();
-          if (!apiFirstName.includes(inputFirstName) && !inputFirstName.includes(apiFirstName)) {
-            setError('First name does not match records');
-            setLoading(false);
-            return;
-          }
+        // Verify first name matches (mandatory validation)
+        const apiFirstName = result.name.split(' ')[0].toLowerCase();
+        const inputFirstName = firstName.trim().toLowerCase();
+        if (!apiFirstName.includes(inputFirstName) && !inputFirstName.includes(apiFirstName)) {
+          setError('First name does not match records');
+          setLoading(false);
+          return;
         }
-        setUserDetails({ idNumber: result.idNumber!, name: result.name });
+        setUserDetails({ idNumber: result.idNumber!, name: result.name, pin: result.pin });
         setStep(2);
       } else {
         setError(result.error || 'ID validation failed');
@@ -52,8 +53,8 @@ function SignupContent() {
 
   const handleRegister = () => {
     if (!termsAccepted) { setError('Please accept terms & conditions'); return; }
-    // Go to OTP step
-    router.push(`/etims/auth/otp?number=${encodeURIComponent(phoneNumber)}&id=${encodeURIComponent(userDetails?.idNumber || '')}&name=${encodeURIComponent(userDetails?.name || '')}`);
+    // Go to login page
+    router.push(`/etims/auth/login?number=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(userDetails?.name || '')}&pin=${encodeURIComponent(userDetails?.pin || '')}`)
   };
 
   if (!phoneNumber) {
@@ -96,23 +97,18 @@ function SignupContent() {
             {/* ID Input */}
             <Card>
               <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-600 font-medium mb-1">
-                    <CreditCard className="w-3.5 h-3.5 inline mr-1" />
-                    ID Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                    placeholder="12345678"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                  />
-                </div>
+                <IDInput
+                  label="ID Number"
+                  value={idNumber}
+                  onChange={setIdNumber}
+                  onValidationChange={setIsIdValid}
+                  required
+                  className="text-sm py-2"
+                />
                 <div>
                   <label className="block text-xs text-gray-600 font-medium mb-1">
                     <User className="w-3.5 h-3.5 inline mr-1" />
-                    First Name <span className="text-gray-400">(optional)</span>
+                    First Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -131,7 +127,7 @@ function SignupContent() {
               </div>
             )}
 
-            <Button onClick={handleValidateId} disabled={loading || !idNumber.trim()}>
+            <Button onClick={handleValidateId} disabled={loading || !isIdValid || !firstName.trim()}>
               {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Validating...</> : 'Validate'}
             </Button>
           </>
@@ -149,8 +145,12 @@ function SignupContent() {
 
             {/* Terms */}
             <Card>
-              <div className="text-xs text-gray-600 mb-3 max-h-24 overflow-y-auto">
-                <p className="font-medium mb-1">Terms & Conditions</p>
+              <div className="text-xs text-gray-600 mb-3">
+                <p className="font-medium mb-1">
+                  <a href="/etims/auth/terms" className="text-[var(--kra-red)] underline hover:text-red-800">
+                    Terms & Conditions
+                  </a>
+                </p>
                 <p>By registering, you agree to use the eTIMS service in accordance with KRA guidelines. You confirm that the information provided is accurate and you are authorized to use this phone number for tax-related services.</p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -160,7 +160,12 @@ function SignupContent() {
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                   className="w-4 h-4 text-[var(--kra-red)]"
                 />
-                <span className="text-xs text-gray-700">I accept the Terms & Conditions</span>
+                <span className="text-xs text-gray-700">
+                  I accept the{' '}
+                  <a href="/etims/auth/terms" className="text-[var(--kra-red)] underline hover:text-red-800">
+                    Terms & Conditions
+                  </a>
+                </span>
               </label>
             </Card>
 
