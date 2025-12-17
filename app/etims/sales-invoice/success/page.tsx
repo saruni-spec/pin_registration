@@ -24,9 +24,9 @@ export default function SalesInvoiceSuccess() {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <div>
-              <h2 className="text-green-900 text-lg font-medium mb-1">Invoice Generated</h2>
+              <h2 className="text-green-900 text-lg font-medium mb-1">Sales Invoice Generated</h2>
               <p className="text-xs text-green-700">
-                Your eTIMS invoice has been created successfully
+               Your sales invoice has been created. We have delivered the invoice acknowledgement as a PDF to your WhatsApp and sent an SMS with a link to access the invoice.
               </p>
             </div>
           </div>
