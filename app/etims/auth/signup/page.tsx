@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout, Card, Button } from '../../_components/Layout';
 import { IDInput } from '../../../_components/KRAInputs';
 import { YearOfBirthInput } from '../../../_components/YearOfBirthInput';
-import { lookupById } from '../../../actions/etims';
+import { lookupById, registerTaxpayer } from '../../../actions/etims';
 import { Loader2 } from 'lucide-react';
 
 function SignupContent() {
@@ -46,15 +46,32 @@ function SignupContent() {
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!termsAccepted) { setError('Please accept terms & conditions'); return; }
-    // Go to success page, which will then redirect to login
-    const params = new URLSearchParams({
-      phone: phoneNumber,
-      name: userDetails?.name || '',
-      pin: userDetails?.pin || ''
-    });
-    router.push(`/etims/auth/signup/success?${params.toString()}`);
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Call the registration API
+      const result = await registerTaxpayer(idNumber, phoneNumber);
+      
+      if (result.success) {
+        // Registration successful - go to success page
+        const params = new URLSearchParams({
+          phone: phoneNumber,
+          name: userDetails?.name || '',
+          pin: userDetails?.pin || ''
+        });
+        router.push(`/etims/auth/signup/success?${params.toString()}`);
+      } else {
+        setError(result.error || 'Registration failed. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!phoneNumber) {
@@ -167,8 +184,10 @@ function SignupContent() {
             )}
 
             <div className="space-y-2">
-              <Button onClick={handleRegister}>Register</Button>
-              <button onClick={() => setStep(1)} className="w-full py-2 text-gray-600 text-xs font-medium">
+              <Button onClick={handleRegister} disabled={loading}>
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Registering...</> : 'Register'}
+              </Button>
+              <button onClick={() => setStep(1)} disabled={loading} className="w-full py-2 text-gray-600 text-xs font-medium disabled:text-gray-400">
                 Edit Details
               </button>
             </div>
