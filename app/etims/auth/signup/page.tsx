@@ -5,23 +5,25 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout, Card, Button } from '../../_components/Layout';
 import { IDInput } from '../../../_components/KRAInputs';
 import { YearOfBirthInput } from '../../../_components/YearOfBirthInput';
-import { lookupById, registerTaxpayer, checkUserStatus } from '../../../actions/etims';
-import { Loader2 } from 'lucide-react';
+import { lookupById, registerTaxpayer, checkUserStatus, generateOTP, verifyOTP } from '../../../actions/etims';
+import { Loader2, ArrowLeft, Smartphone } from 'lucide-react';
 
 function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phoneNumber = searchParams.get('number') || '';
   
-  const [step, setStep] = useState(1); // 1: ID input, 2: Preview, 3: OTP
+  const [step, setStep] = useState(1); // 1: ID input, 2: Preview/Terms, 3: OTP verification
   const [idNumber, setIdNumber] = useState('');
   const [yearOfBirth, setYearOfBirth] = useState('');
   const [userDetails, setUserDetails] = useState<{ idNumber: string; name: string; pin?: string } | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isIdValid, setIsIdValid] = useState(false);
   const [isYearValid, setIsYearValid] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const handleValidateId = async () => {
     setError('');
@@ -31,7 +33,6 @@ function SignupContent() {
 
     setLoading(true);
     try {
-      // Pass year of birth to the lookup API (API will validate it)
       const result = await lookupById(idNumber.trim());
       if (result.success && result.name) {
         setUserDetails({ idNumber: result.idNumber!, name: result.name, pin: result.pin });
@@ -46,7 +47,7 @@ function SignupContent() {
     }
   };
 
-  const handleRegister = async () => {
+  const handleProceedToOTP = async () => {
     if (!termsAccepted) { setError('Please accept terms & conditions'); return; }
     
     setLoading(true);
@@ -68,11 +69,58 @@ function SignupContent() {
         return;
       }
       
-      // Call the registration API
+      // Send OTP to user's phone
+      const otpResult = await generateOTP(phoneNumber);
+      if (otpResult.success) {
+        setOtpSent(true);
+        setStep(3);
+      } else {
+        setError(otpResult.error || 'Failed to send OTP. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await generateOTP(phoneNumber);
+      if (result.success) {
+        setError(''); // Clear any previous error
+        alert('OTP sent successfully!');
+      } else {
+        setError(result.error || 'Failed to resend OTP');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async () => {
+    if (!otp.trim() || otp.length < 4) { setError('Enter a valid OTP'); return; }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // First verify OTP
+      const verifyResult = await verifyOTP(phoneNumber, otp);
+      if (!verifyResult.success) {
+        setError(verifyResult.error || 'Invalid OTP. Please try again.');
+        setLoading(false);
+        return;
+      }
+      
+      // OTP verified - now register
       const result = await registerTaxpayer(idNumber, phoneNumber);
       
       if (result.success) {
-        // Registration successful - go to success page
         const params = new URLSearchParams({
           phone: phoneNumber,
           name: userDetails?.name || '',
@@ -89,6 +137,13 @@ function SignupContent() {
     }
   };
 
+  const handleBack = () => {
+    setError('');
+    if (step === 1) router.push('/etims/auth');
+    else if (step === 3) setStep(2);
+    else setStep(1);
+  };
+
   if (!phoneNumber) {
     return (
       <Layout title="Sign Up" onBack={() => router.push('/etims/auth')}>
@@ -100,8 +155,19 @@ function SignupContent() {
     );
   }
 
+  const getStepInfo = () => {
+    switch(step) {
+      case 1: return { title: 'Sign Up', subtitle: 'Step 1/3 - Verify identity' };
+      case 2: return { title: 'Confirm Details', subtitle: 'Step 2/3 - Review & accept' };
+      case 3: return { title: 'Verify Phone', subtitle: 'Step 3/3 - Enter OTP' };
+      default: return { title: 'Sign Up', subtitle: '' };
+    }
+  };
+
+  const stepInfo = getStepInfo();
+
   return (
-    <Layout title="Sign Up" showHeader={false} showFooter={false} onBack={() => step === 1 ? router.push('/etims/auth') : setStep(1)}>
+    <Layout title="Sign Up" showHeader={false} showFooter={false} onBack={handleBack}>
       <div className="space-y-4">
         {/* Logo */}
         <div className="flex justify-center py-2">
@@ -110,18 +176,12 @@ function SignupContent() {
 
         {/* Header */}
         <div className="bg-[var(--kra-black)] rounded-xl p-4 text-white">
-          <h1 className="text-base font-semibold">
-            {step === 1 ? 'Sign Up' : 'Confirm Details'}
-          </h1>
-          <p className="text-gray-400 text-xs">
-            {step === 1 ? 'Step 1/3 - Verify identity' : 'Step 2/3 - Review & accept'}
-          </p>
+          <h1 className="text-base font-semibold">{stepInfo.title}</h1>
+          <p className="text-gray-400 text-xs">{stepInfo.subtitle}</p>
         </div>
 
         {step === 1 ? (
           <>
-           
-         
             {/* ID Input */}
             <Card>
               <div className="space-y-3">
@@ -154,7 +214,7 @@ function SignupContent() {
               {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Validating...</> : 'Validate'}
             </Button>
           </>
-        ) : userDetails && (
+        ) : step === 2 && userDetails ? (
           <>
             {/* Preview */}
             <Card className="bg-green-50 border-green-200">
@@ -162,7 +222,6 @@ function SignupContent() {
               <div className="space-y-1 text-sm">
                 <p><span className="text-gray-500">ID:</span> <span className="font-medium">{userDetails.idNumber}</span></p>
                 <p><span className="text-gray-500">Name:</span> <span className="font-medium">{userDetails.name}</span></p>
-                
               </div>
             </Card>
 
@@ -199,15 +258,62 @@ function SignupContent() {
             )}
 
             <div className="space-y-2">
-              <Button onClick={handleRegister} disabled={loading}>
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Registering...</> : 'Register'}
+              <Button onClick={handleProceedToOTP} disabled={loading}>
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Sending OTP...</> : 'Continue'}
               </Button>
               <button onClick={() => setStep(1)} disabled={loading} className="w-full py-2 text-gray-600 text-xs font-medium disabled:text-gray-400">
                 Edit Details
               </button>
             </div>
           </>
-        )}
+        ) : step === 3 ? (
+          <>
+            {/* OTP Verification */}
+            <Card>
+              <div className="flex items-center gap-2 mb-3">
+                <Smartphone className="w-5 h-5 text-[var(--kra-red)]" />
+                <span className="text-sm font-medium text-gray-700">Verify Your Phone</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                Enter the OTP sent to <span className="font-medium">{phoneNumber}</span>
+              </p>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.toUpperCase().slice(0, 6))}
+                placeholder="Enter OTP"
+                className="w-full px-4 py-3 text-center text-xl font-bold tracking-widest border border-gray-300 rounded-lg"
+                maxLength={6}
+              />
+            </Card>
+
+            {error && (
+              <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Button onClick={handleVerifyAndRegister} disabled={loading || otp.length < 4}>
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-1" />Verifying...</> : 'Verify & Register'}
+              </Button>
+              <button 
+                onClick={handleResendOTP} 
+                disabled={loading} 
+                className="w-full py-2 text-[var(--kra-red)] text-xs font-medium disabled:text-gray-400"
+              >
+                Resend OTP
+              </button>
+              <button 
+                onClick={() => setStep(2)} 
+                disabled={loading} 
+                className="w-full py-2 text-gray-600 text-xs font-medium disabled:text-gray-400 flex items-center justify-center gap-1"
+              >
+                <ArrowLeft className="w-3 h-3" /> Go Back
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </Layout>
   );
@@ -220,3 +326,4 @@ export default function SignupPage() {
     </Suspense>
   );
 }
+

@@ -446,16 +446,21 @@ export async function submitCreditNote(
     return { success: false, error: 'Invoice number is required' };
   }
 
-  if (!request.items || request.items.length === 0) {
+  // and credit note type if partial
+  if (request.credit_note_type === 'partial' && (!request.items || request.items.length === 0)) {
     return { success: false, error: 'Please select at least one item' };
   }
 
-  // Validate each item
+  if (request.credit_note_type === "partial"){
+
+     // Validate each item
   for (const item of request.items) {
     if (item.return_quantity <= 0) {
       return { success: false, error: 'Return quantity must be greater than 0' };
     }
   }
+  }
+ 
 
   // Clean phone number
   let cleanNumber = request.msisdn.trim().replace(/[^\d]/g, '');
