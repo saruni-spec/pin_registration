@@ -15,7 +15,7 @@ export default function BuyerInitiatedHome() {
   ];
 
   const sellerActions = [
-    { title: 'Pending Invoice', description: 'Awaiting your action', icon: Clock, color: 'orange' as const, onClick: () => router.push('/etims/buyer-initiated/seller/pending') },
+    { title: 'Pending Invoice', description: 'Awaiting your approval', icon: Clock, color: 'orange' as const, onClick: () => router.push('/etims/buyer-initiated/seller/pending') },
     { title: 'Approved Invoice', description: 'Invoices you approved', icon: CheckCircle, color: 'green' as const, onClick: () => router.push('/etims/buyer-initiated/seller/pending?status=approved') },
     { title: 'Rejected Invoice', description: 'Invoices you declined', icon: XCircle, color: 'red' as const, onClick: () => router.push('/etims/buyer-initiated/seller/pending?status=rejected') },
   ];
