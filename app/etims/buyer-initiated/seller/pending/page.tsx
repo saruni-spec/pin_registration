@@ -79,7 +79,7 @@ function SellerPendingContent() {
     if (invoice.invoice_pdf_url) {
       window.open(invoice.invoice_pdf_url, '_blank');
     } else {
-      alert('Download URL not available for this invoice');
+      alert('Download URL not available for this invoice.');
     }
   };
 
