@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout, Card, Button } from '../../../_components/Layout';
-import { fetchInvoices } from '../../../../actions/etims';
+import { fetchInvoices, processBuyerInvoiceBulk } from '../../../../actions/etims';
 import { FetchedInvoice } from '../../../_lib/definitions';
 import { Download, Eye, Loader2, Phone, FileText, Square, CheckSquare } from 'lucide-react';
 import { getUserSession } from '../../../_lib/store';
@@ -101,6 +101,50 @@ function SellerPendingContent() {
     }
   };
 
+  const handleBulkAction = async (action: 'accept' | 'reject') => {
+    if (!phoneNumber || selectedInvoices.size === 0) return;
+    if (!confirm(`Are you sure you want to ${action === 'accept' ? 'approve' : 'reject'} ${selectedInvoices.size} invoice(s)?`)) return;
+    
+    setLoading(true);
+    try {
+      // Map selected IDs back to invoice numbers for the API
+      const invoiceRefs: string[] = [];
+      selectedInvoices.forEach(id => {
+         const inv = invoices.find(i => (i.uuid || i.invoice_number || i.invoice_id || i.reference || String(invoices.indexOf(i))) === id);
+         if (inv) {
+             // Prefer invoice_number, fallback to reference or id
+             invoiceRefs.push(inv.invoice_number || inv.reference || inv.invoice_id || '');
+         }
+      });
+      
+      const validRefs = invoiceRefs.filter(ref => ref !== '');
+
+      if (validRefs.length === 0) {
+          alert('Could not resolve invoice numbers for selected items.');
+          setLoading(false);
+          return;
+      }
+
+      const result = await processBuyerInvoiceBulk(phoneNumber, validRefs, action);
+      
+      if (result.success) {
+          // Success message
+          // alert(`Successfully processed ${result.processed} invoices.`);
+          setSelectedInvoices(new Set()); // Clear selection
+          fetchInvoicesData(phoneNumber, userName); // Refresh list
+      } else {
+          // Partial success or failure
+          alert(`Processed: ${result.processed}, Failed: ${result.failed}\nErrors: ${result.errors.slice(0, 3).join(', ')}${result.errors.length > 3 ? '...' : ''}`);
+          setSelectedInvoices(new Set()); 
+          fetchInvoicesData(phoneNumber, userName);
+      }
+    } catch (err: any) {
+      alert(`Bulk action failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const allSelected = invoices.length > 0 && selectedInvoices.size === invoices.length;
 
   if (initializing) return <Layout title={getPageTitle()} onBack={() => router.push('/etims/buyer-initiated')}><div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div></Layout>;
@@ -137,8 +181,8 @@ function SellerPendingContent() {
                   <div className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-700">{selectedInvoices.size} selected</span>
                     <div className="flex gap-2">
-                      <button className="px-2 py-1 bg-red-600 text-white text-xs rounded font-medium">Reject</button>
-                      <button className="px-2 py-1 bg-[var(--kra-green)] text-white text-xs rounded font-medium">Approve</button>
+                      <button onClick={() => handleBulkAction('reject')} disabled={loading} className="px-2 py-1 bg-red-600 text-white text-xs rounded font-medium disabled:opacity-50">Reject</button>
+                      <button onClick={() => handleBulkAction('accept')} disabled={loading} className="px-2 py-1 bg-[var(--kra-green)] text-white text-xs rounded font-medium disabled:opacity-50">Approve</button>
                     </div>
                   </div>
                 )}

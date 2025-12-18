@@ -479,17 +479,20 @@ export async function submitCreditNote(
     let endpoint = '';
     let payload: any = {
       msisdn: cleanNumber,
-      invoice_no: request.invoice_no,
       reason: request.reason
     };
 
     if (request.credit_note_type === 'full') {
       endpoint = `${BASE_URL}/submit/credit-note`;
+      payload.invoice_no = request.invoice_no;
       payload.full = true;
       // No items needed for full credit note
     } else {
       endpoint = `${BASE_URL}/submit/partial-credit-note`;
+      // Partial credit note expects etims_invoice_no and source
+      payload.etims_invoice_no = request.invoice_no;
       payload.items = request.items;
+      payload.source = 'whatsapp';
       // No full flag needed for partial
     }
 
@@ -581,6 +584,35 @@ export async function processBuyerInvoice(
     const errorMessage = getApiErrorMessage(error, 'Process Invoice');
     return { success: false, error: errorMessage };
   }
+}
+
+/**
+ * Process multiple buyer initiated invoices (bulk accept/reject)
+ */
+export async function processBuyerInvoiceBulk(
+  msisdn: string,
+  invoiceRefs: string[],
+  action: 'accept' | 'reject'
+): Promise<{ success: boolean; processed: number; failed: number; errors: string[] }> {
+  if (!msisdn) return { success: false, processed: 0, failed: 0, errors: ['Phone number is required'] };
+  if (!invoiceRefs || invoiceRefs.length === 0) return { success: false, processed: 0, failed: 0, errors: ['No invoices selected'] };
+
+  console.log(`Processing bulk invoices for ${msisdn}: ${action} (${invoiceRefs.length} items)`);
+
+  const results = await Promise.all(
+    invoiceRefs.map(ref => processBuyerInvoice(msisdn, ref, action))
+  );
+
+  const processed = results.filter(r => r.success).length;
+  const failed = results.filter(r => !r.success).length;
+  const errors = results.filter(r => !r.success && r.error).map(r => r.error as string);
+
+  return {
+    success: failed === 0, // Considered fully successful only if all succeed
+    processed,
+    failed,
+    errors
+  };
 }
 
 /**
