@@ -43,7 +43,8 @@ export default function CreditNoteFull() {
       // Prepare items for full credit note
       const items = creditNote.invoice.items.map(item => ({ 
         item_id: item.id, 
-        return_quantity: item.quantity 
+        quantity: item.quantity,
+        item_name: item.name
       }));
 
       const result = await submitCreditNote({
