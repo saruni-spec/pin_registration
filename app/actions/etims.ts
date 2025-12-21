@@ -631,7 +631,7 @@ export async function processBuyerInvoice(
                   await sendWhatsAppDocument({
                     recipientPhone: cleanNumber,
                     documentUrl: approvedInvoice.invoice_pdf_url,
-                    caption: `Dear *${sellerName}*,\n\nInvoice *${approvedInvoice.invoice_number || invoiceRef}* Amount: ${approvedInvoice.total_amount} has been approved.\n\nAttached is the invoice PDF.`,
+                    caption: `Dear *${approvedInvoice.seller_name || 'Customer'}*,\n\nInvoice *${approvedInvoice.invoice_number || invoiceRef}* Amount: ${approvedInvoice.total_amount} has been approved.\n\nAttached is the invoice PDF.`,
                     filename: `Invoice_${approvedInvoice.invoice_number || invoiceRef}.pdf`
                   });
 
