@@ -198,8 +198,8 @@ export default function BuyerInitiatedDetails() {
 
         {/* Delete Confirmation Modal */}
         {deleteConfirmationId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden relative">
               <div className="p-5 text-center">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Trash2 className="w-6 h-6 text-red-600" />
