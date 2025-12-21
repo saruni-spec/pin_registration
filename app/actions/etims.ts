@@ -671,8 +671,8 @@ export async function submitBuyerInitiatedInvoice(
 
     return {
       success: response.data.success !== false, // Some APIs return success: true/false, others implict success
-      invoice_id: response.data.invoice_id || response.data.reference,
-      invoice_number: response.data.invoice_number,
+      invoice_id: response.data.invoice_id || response.data.reference || response.data.invoice_no,
+      invoice_number: response.data.invoice_number || response.data.invoice_no,
       reference: response.data.reference,
       invoice_pdf_url: response.data.invoice_pdf_url,
       message: response.data.message || 'Invoice submitted to buyer successfully'
@@ -1191,6 +1191,8 @@ export async function sendBuyerInitiatedInvoiceAlert(
     return { success: false, error: 'Configuration error' };
   }
 
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
   const url = `https://crm.chatnation.co.ke/api/meta/v21.0/${phoneNumberId}/messages`;
 
   const payload = {
@@ -1208,7 +1210,7 @@ export async function sendBuyerInitiatedInvoiceAlert(
             { type: "text", text: sellerName || "Seller" },
             { type: "text", text: buyerName || "Buyer" },
             { type: "text", text: amount },
-            { type: "text", text: invoiceNumber }
+            { type: "text", text: today }
           ]
         }
       ]

@@ -33,8 +33,8 @@ function BuyerInitiatedSuccessContent() {
               </h2>
               <p className="text-xs text-green-700">
                 Your invoice {invoiceNo && (
-                <span className="font-semibold text-green-800">[{invoiceNo}]</span>
-              )} has been successfully created and sent to {sellerName ? <span className="font-semibold text-green-800">[{sellerName}]</span> : 'the seller'}. We have delivered the invoice acknowledgement as a PDF to your WhatsApp.
+                <span className="font-semibold text-green-800">{invoiceNo}</span>
+              )} has been successfully created and sent to {sellerName ? <span className="font-semibold text-green-800">{sellerName}</span> : 'the seller'}.
               </p>
             </div>
           </div>

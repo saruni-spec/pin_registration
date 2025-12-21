@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Layout, Card } from '../../../_components/Layout';
-import { submitBuyerInitiatedInvoice, sendWhatsAppDocument, sendBuyerInitiatedInvoiceAlert } from '../../../../actions/etims';
+import { submitBuyerInitiatedInvoice, sendWhatsAppDocument, sendBuyerInitiatedInvoiceAlert, sendWhatsAppMessage } from '../../../../actions/etims';
 import { saveBuyerInitiated, getBuyerInitiated, BuyerInitiatedInvoice, calculateTotals, getUserSession } from '../../../_lib/store';
 import { Loader2, Edit2, Send, Store, Check, X } from 'lucide-react';
 
@@ -65,14 +65,27 @@ export default function BuyerInitiatedReview() {
 // Your Sales Invoice KRASRN000006245/464 for KES 39,000 was issued on 17 Dec 2025. 
 
 // The Sales Invoice  PDF is attached for your records.
-        if (result.invoice_pdf_url && session.msisdn) {
+        // if (result.invoice_pdf_url && session.msisdn) {
+        //   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        //   await sendWhatsAppDocument({
+        //     recipientPhone: session.msisdn,
+        //     documentUrl: result.invoice_pdf_url,
+        //     caption: `Dear *${session.name || 'Valued Customer'}*,\n\nYour buyer-initiated invoice *${result.invoice_number || result.reference || result.invoice_id}* of KES *${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}* to *${invoice.sellerName}* has been successfully submitted on *${today}*\n\nPlease find the attached invoice document for your records.\n\nThank you for using KRA eTIMS services.`,
+        //     filename: `eTIMS_Buyer_Invoice_${result.invoice_number || result.reference || today}.pdf`
+        //   });
+        // }
+
+//         Dear[Buyer Name]
+// [Seller Name] You have created a buyer initiated invoice of  KES [Amount] on [Date] for [Seller Name]. 
+
+        if (session.msisdn) {
           const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-          await sendWhatsAppDocument({
-            recipientPhone: session.msisdn,
-            documentUrl: result.invoice_pdf_url,
-            caption: `Dear *${session.name || 'Valued Customer'}*,\n\nYour buyer-initiated invoice *${result.invoice_number || result.reference || result.invoice_id}* of KES *${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}* to *${invoice.sellerName}* has been successfully submitted on *${today}*\n\nPlease find the attached invoice document for your records.\n\nThank you for using KRA eTIMS services.`,
-            filename: `eTIMS_Buyer_Invoice_${result.invoice_number || result.reference || today}.pdf`
-          });
+          await sendWhatsAppMessage(
+            {
+              recipientPhone: session.msisdn,
+              message: `Dear *${session.name || 'Valued Customer'}*,\n\nYou have created a buyer initiated invoice of KES *${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}* on *${today}* for *${invoice.sellerName}*.`
+            }
+          )
         }
         
         // Send notification to seller
