@@ -181,7 +181,7 @@ export default function BuyerInitiatedReview() {
             </tbody>
             <tfoot className="bg-[var(--kra-black)] text-white">
               <tr>
-                <td colSpan={2} className="py-2 px-1 font-medium">Total Amount</td>
+                <td colSpan={3} className="py-2 px-1 font-medium">Total Amount</td>
                 <td className="py-2 px-1 text-right font-bold">KES {totals.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             </tfoot>
