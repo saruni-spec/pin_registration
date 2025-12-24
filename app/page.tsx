@@ -28,7 +28,7 @@ function PinRegistrationContent() {
   };
 
   return (
-    <Layout showHeader={false}>
+    <Layout title="KRA PIN Registration">
       <div className="flex flex-col items-center justify-center min-h-[80vh]">
         <div className="w-20 h-20 bg-kra-light-gray rounded-full flex items-center justify-center mb-6">
           <FileText className="w-10 h-10 text-kra-red" />

@@ -160,12 +160,11 @@ export async function validateOTP(msisdn: string, otp: string): Promise<OTPResul
  */
 export async function lookupById(
   idNumber: string, 
-  msisdn?: string
+  msisdn: string
 ): Promise<IdLookupResult> {
   const headers = await getAuthHeaders();
   
-  // Primary: Use ID Lookup API (most reliable)
-  if (msisdn) {
+  
     try {
       const cleanNumber = cleanPhoneNumber(msisdn);
       const response = await axios.post(
@@ -183,7 +182,7 @@ export async function lookupById(
       console.log('ID Lookup response:', response.data);
 
       const data = response.data;
-      if (data.name || data.success) {
+   
         return {
           success: true,
           message: data.message || 'Valid ID',
@@ -191,53 +190,17 @@ export async function lookupById(
           idNumber: idNumber,
           pin: data.pin // Some endpoints return PIN here
         };
-      }
+      
+
     } catch (error: any) {
       console.error('ID Lookup error:', error.response?.data || error.message);
-    }
-  }
-
-  // Fallback: Use GUI Lookup API
-  try {
-    const response = await axios.get(
-      `${ITAX_URL}/gui-lookup`,
-      {
-        params: {
-          gui: idNumber,
-          tax_payer_type: 'KE',
-        },
-        headers: headers,
-        timeout: 30000,
-      }
-    );
-
-    const data = response.data;
-    console.log('GUI Lookup response (fallback):', data);
-
-    if (data.Status === 'OK' || data.ResponseCode === '30000' || data.Message === 'Valid ID') {
-      return {
-        success: true,
-        code: parseInt(data.ResponseCode) || 200,
-        message: data.Message || 'Valid ID',
-        name: data.TaxpayerName,
-        pin: data.PIN,
-        idNumber: idNumber,
-      };
-    } else {
       return {
         success: false,
-        code: parseInt(data.ResponseCode) || 400,
-        message: data.Message || 'Invalid ID number',
+        message: error.response?.data?.message || 'Failed to lookup ID',
       };
     }
-  } catch (error: any) {
-    console.error('GUI Lookup error:', error.response?.data || error.message);
+  
 
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Failed to lookup ID',
-    };
-  }
 }
 
 /**
@@ -337,4 +300,14 @@ export async function initiateSession(
       message: error.response?.data?.message || 'Failed to initiate session',
     };
   }
+}
+
+
+/**
+ * Logout the user by clearing the session token
+ */
+export async function logout(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete('auth_token');
+  // We explicitly keep 'phone_Number' intact as requested
 }

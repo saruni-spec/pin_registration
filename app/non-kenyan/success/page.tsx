@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Layout, Button, SuccessState } from '../../_components/Layout';
-import { FileDown, Menu } from 'lucide-react';
+import { FileDown, Menu, Plus } from 'lucide-react';
 
 export default function NonKenyanSuccess() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function NonKenyanSuccess() {
   };
 
   return (
-    <Layout>
+    <Layout title="Registration Successful">
       <SuccessState message="Your PIN has been successfully registered." />
 
       {result?.pin && (
@@ -45,16 +45,21 @@ export default function NonKenyanSuccess() {
             Download PIN Certificate
           </div>
         </Button>
-
-        <Button 
-          variant="secondary" 
-          onClick={() => router.push('/menu')}
+<button
+          onClick={() => router.push('/non-kenyan/identity')}
+          className="w-full bg-white border-2 border-gray-300 rounded-xl p-5 hover:border-green-600 hover:bg-green-50 transition-all"
         >
-          <div className="flex items-center justify-center gap-2">
-            <Menu className="w-5 h-5" />
-            What would you like to do next?
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Plus className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="text-left flex-1">
+              <h3 className="text-gray-900 font-semibold">Register Another PIN</h3>
+            </div>
           </div>
-        </Button>
+        </button>
+
+       
       </div>
 
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">

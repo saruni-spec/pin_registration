@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Layout, Button, Input } from '../../_components/Layout';
 import { IDInput } from '@/app/components/KRAInputs';
-import { saveRegistrationData } from '../../_lib/store';
+import { getPhoneNumber, saveRegistrationData } from '../../_lib/store';
 import { lookupById } from '../../actions/pin-registration';
 import { Loader2 } from 'lucide-react';
 
@@ -19,6 +19,16 @@ export default function KenyanIdentityInput() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+    useEffect(() => {
+      // Get phone from URL or session
+      const storedPhone =  getPhoneNumber() || '';
+      setPhoneNumber(storedPhone);
+      
+    
+    }, []);
+  
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -47,7 +57,7 @@ export default function KenyanIdentityInput() {
 
     try {
       // Lookup ID to validate and get taxpayer details
-      const result = await lookupById(formData.nationalId);
+      const result = await lookupById(formData.nationalId, phoneNumber, formData.yearOfBirth);
       
       if (result.success) {
         // Save registration data with validated info
@@ -68,7 +78,7 @@ export default function KenyanIdentityInput() {
         
         router.push('/kenyan/validate');
       } else {
-        setApiError(result.message || 'Invalid ID number. Please check and try again.');
+        setApiError(result.error || 'Invalid ID number. Please check and try again.');
       }
     } catch (err: any) {
       setApiError(err.message || 'Failed to validate ID. Please try again.');
