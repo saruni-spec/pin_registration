@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Layout, Button, Input } from '../../_components/Layout';
-import { saveRegistrationData } from '../../_lib/store';
+import { getPhoneNumber, saveRegistrationData } from '../../_lib/store';
 import { lookupById } from '../../actions/pin-registration';
 import { Loader2 } from 'lucide-react';
 
@@ -17,6 +17,16 @@ export default function NonKenyanIdentityInput() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  const [phoneNumber, setPhoneNumber] = useState('');
+  
+      useEffect(() => {
+        // Get phone from URL or session
+        const storedPhone =  getPhoneNumber() || '';
+        setPhoneNumber(storedPhone);
+        
+      
+      }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -45,7 +55,7 @@ export default function NonKenyanIdentityInput() {
 
     try {
       // For non-Kenyan, we attempt lookup but allow continuation even if not found
-      const result = await lookupById(formData.alienId);
+      const result = await lookupById(formData.alienId,phoneNumber, formData.yearOfBirth);
       
       // Save registration data
       saveRegistrationData({
