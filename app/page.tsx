@@ -40,10 +40,10 @@ function PinRegistrationContent() {
           Register for a KRA PIN in 2–3 minutes.
         </p>
 
-        {phoneNumber && (
+        {!phoneNumber && (
           <div className="bg-kra-light-gray border border-kra-border-gray rounded-lg p-3 mb-6 text-center">
             <p className="text-sm text-kra-black">
-              Registering with: <span className="font-medium">{phoneNumber}</span>
+             Cannot proeceed without phone number
             </p>
           </div>
         )}
@@ -53,9 +53,7 @@ function PinRegistrationContent() {
             Start Registration
           </Button>
           
-          <Button variant="text" onClick={() => window.history.back()}>
-            Cancel / Back to WhatsApp
-          </Button>
+         
         </div>
       </div>
     </Layout>
