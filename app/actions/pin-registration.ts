@@ -14,15 +14,12 @@ export interface OTPResult {
   code?: number;
 }
 
-export interface IdLookupResult {
+export interface LookupByIdResult {
   success: boolean;
-  code?: number;
-  message: string;
+  error?: string;
+  idNumber?: string;
   name?: string;
   pin?: string;
-  idNumber?: string;
-  dateOfBirth?: string;
-  gender?: string;
 }
 
 export interface PinRegistrationResult {
@@ -158,49 +155,73 @@ export async function validateOTP(msisdn: string, otp: string): Promise<OTPResul
  * Primary: GET /api/itax/gui-lookup
  * Fallback: POST /api/ussd/id-lookup
  */
-export async function lookupById(
-  idNumber: string, 
-  msisdn: string
-): Promise<IdLookupResult> {
-  const headers = await getAuthHeaders();
-  
-  
-    try {
-      const cleanNumber = cleanPhoneNumber(msisdn);
-      const response = await axios.post(
-        `${BASE_URL}/id-lookup`,
-        {
-          id_number: idNumber,
-          msisdn: cleanNumber,
-        },
-        {
-          headers: headers,
-          timeout: 30000,
-        }
-      );
 
-      console.log('ID Lookup response:', response.data);
+/**
+ * Lookup user details by ID number using lookup API
+ */
+export async function lookupById(idNumber: string, phoneNumber: string, yearOfBirth: string): Promise<LookupByIdResult> {
+  if (!idNumber || idNumber.trim().length < 6) {
+    return { success: false, error: 'ID number must be at least 6 characters' };
+  }
+  if (!phoneNumber) {
+    return { success: false, error: 'Phone number is required' };
+  }
+  if (!yearOfBirth) {
+    return { success: false, error: 'Year of birth is required' };
+  }
 
-      const data = response.data;
-   
-        return {
-          success: true,
-          message: data.message || 'Valid ID',
-          name: data.name,
-          idNumber: idNumber,
-          pin: data.pin // Some endpoints return PIN here
-        };
+  // Clean phone number
+  let cleanNumber = phoneNumber.trim().replace(/[^\d]/g, '');
+  if (cleanNumber.startsWith('0')) cleanNumber = '254' + cleanNumber.substring(1);
+  else if (!cleanNumber.startsWith('254')) cleanNumber = '254' + cleanNumber;
+
+  console.log('Looking up ID:', idNumber, 'Phone:', cleanNumber, 'YOB to verify:', yearOfBirth);
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.post(
+      'https://kratest.pesaflow.com/api/ussd/id-lookup',
+      { 
+        id_number: idNumber.trim(),
+        msisdn: cleanNumber
+      },
+      { 
+        headers, 
+        timeout: 30000 
+      }
+    );
+
+    console.log('ID lookup response:', JSON.stringify(response.data, null, 2));
+
+    // Check if we got a valid response with data
+    if (response.data && response.data.name && response.data.yob) {
       
+      // Validate Year of Birth
+      const returnedYob = response.data.yob ? response.data.yob.toString() : '';
+      
+      if (returnedYob !== yearOfBirth.trim()) {
+        return {
+          success: false,
+          error: `Some of your information didn't match. Please check your details and try again.`
+        };
+      }
 
-    } catch (error: any) {
-      console.error('ID Lookup error:', error.response?.data || error.message);
       return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to lookup ID',
+        success: true,
+        idNumber: response.data.id_number || idNumber.trim(),
+        name: response.data.name,
+        pin: response.data.pin,
+      };
+    } else {
+      return { 
+        success: false, 
+        error: response.data.message || 'ID lookup failed or invalid response' 
       };
     }
-  
-
+  } catch (error: any) {
+    console.error('ID lookup error:', error.response?.data || error.message);
+    return { success: false, error: error.response?.data?.message || 'ID lookup failed' };
+  }
 }
 
 /**
