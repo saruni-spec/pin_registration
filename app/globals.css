@@ -6,22 +6,34 @@
   --kra-red: #CC0000;
   --kra-red-dark: #990000;
   --kra-red-light: #E53935;
-  
+
   /* Black for text and secondary elements */
   --kra-black: #000000;
   --kra-black-light: #333333;
-  
+
   /* Grays */
   --kra-gray: #5A5A5A;
   --kra-light-gray: #F5F5F5;
   --kra-border-gray: #CCCCCC;
-  
+
   /* Success/Green */
   --kra-green: #008751;
   --kra-green-dark: #006741;
-  
+
   /* White */
   --kra-white: #FFFFFF;
+}
+
+@theme {
+  --color-kra-red: var(--kra-red);
+  --color-kra-red-dark: var(--kra-red-dark);
+  --color-kra-red-light: var(--kra-red-light);
+  --color-kra-black: var(--kra-black);
+  --color-kra-black-light: var(--kra-black-light);
+  --color-kra-gray: var(--kra-gray);
+  --color-kra-light-gray: var(--kra-light-gray);
+  --color-kra-border-gray: var(--kra-border-gray);
+  --color-kra-green: var(--kra-green);
 }
 
 /* Toast notification animation */

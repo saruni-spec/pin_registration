@@ -3,7 +3,7 @@ PIN Registration API Test - cURL Commands
 ==========================================
 
 === 1. GUI LOOKUP (ID Validation) ===
-Used in: /pin-registration/kenyan/identity
+Used in: /kenyan/identity
 
 curl -X GET 'https://kratest.pesaflow.com/api/itax/gui-lookup?gui=36447996&tax_payer_type=KE' \
   -H 'x-source-for: whatsapp'
@@ -16,7 +16,7 @@ No server is available to handle this request.
 
 
 === 2. ID LOOKUP (with phone validation) ===
-Used in: /pin-registration/kenyan/identity (fallback)
+Used in: /kenyan/identity (fallback)
 
 curl -X POST 'https://kratest.pesaflow.com/api/ussd/id-lookup' \
   -H 'Content-Type: application/json' \
@@ -46,7 +46,7 @@ No server is available to handle this request.
 
 
 === 4. PIN REGISTRATION (Citizen) ===
-Used in: /pin-registration/kenyan/declaration
+Used in: /kenyan/declaration
 
 curl -X POST 'https://kratest.pesaflow.com/api/ussd/pin-registration' \
   -H 'Content-Type: application/json' \
@@ -61,7 +61,7 @@ No server is available to handle this request.
 
 
 === 5. PIN REGISTRATION (Resident/Non-Kenyan) ===
-Used in: /pin-registration/non-kenyan/declaration
+Used in: /non-kenyan/declaration
 
 curl -X POST 'https://kratest.pesaflow.com/api/ussd/pin-registration' \
   -H 'Content-Type: application/json' \

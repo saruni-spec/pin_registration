@@ -1,6 +1,7 @@
 'use server';
 
 import axios from 'axios';
+import { cookies } from 'next/headers';
 
 const BASE_URL = 'https://kratest.pesaflow.com/api/ussd';
 const ITAX_URL = 'https://kratest.pesaflow.com/api/itax';
@@ -45,6 +46,16 @@ function cleanPhoneNumber(phone: string): string {
   return cleaned;
 }
 
+const getAuthHeaders = async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('etims_auth_token')?.value;
+  return {
+    'Content-Type': 'application/json',
+    'x-source-for': 'whatsapp',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
+
 // ============= API Functions =============
 
 /**
@@ -61,7 +72,7 @@ export async function generateOTP(msisdn: string): Promise<OTPResult> {
       {
         headers: {
           'Content-Type': 'application/json',
-          'x-forwarded-for': 'triple_2_ussd',
+          'x-source-for': 'whatsapp',
         },
         timeout: 30000,
       }
@@ -77,16 +88,15 @@ export async function generateOTP(msisdn: string): Promise<OTPResult> {
   } catch (error: any) {
     console.error('Generate OTP error:', error.response?.data || error.message);
     
-    // For testing, return success even if API fails
     return {
-      success: true,
-      message: 'OTP sent (Test Mode - use any 6-digit code)',
+      success: false,
+      message: error.response?.data?.message || 'Failed to send OTP',
     };
   }
 }
 
 /**
- * Validate OTP code
+ * Validate OTP code and set session cookie
  * POST /api/ussd/validate-otp
  */
 export async function validateOTP(msisdn: string, otp: string): Promise<OTPResult> {
@@ -102,7 +112,7 @@ export async function validateOTP(msisdn: string, otp: string): Promise<OTPResul
       {
         headers: {
           'Content-Type': 'application/json',
-          'x-forwarded-for': 'triple_2_ussd',
+          'x-source-for': 'whatsapp',
         },
         timeout: 30000,
       }
@@ -110,21 +120,31 @@ export async function validateOTP(msisdn: string, otp: string): Promise<OTPResul
 
     console.log('Validate OTP response:', response.data);
 
+    const success = response.data.success !== false;
+
+    if (success) {
+      // Set session cookie for 10 minutes (600 seconds)
+      const token = response.data.token;
+      if (token) {
+        const cookieStore = await cookies();
+        cookieStore.set({
+          name: 'etims_auth_token',
+          value: token,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 600, // 10 minutes
+          path: '/',
+        });
+      }
+    }
+
     return {
-      success: response.data.success !== false,
+      success: success,
       message: response.data.message || 'OTP validated successfully',
       code: response.data.code,
     };
   } catch (error: any) {
     console.error('Validate OTP error:', error.response?.data || error.message);
-    
-    // For testing, allow any 6-digit code
-    if (otp.length === 6 && /^\d+$/.test(otp)) {
-      return {
-        success: true,
-        message: 'OTP validated (Test Mode)',
-      };
-    }
     
     return {
       success: false,
@@ -142,8 +162,43 @@ export async function lookupById(
   idNumber: string, 
   msisdn?: string
 ): Promise<IdLookupResult> {
+  const headers = await getAuthHeaders();
+  
+  // Primary: Use ID Lookup API (most reliable)
+  if (msisdn) {
+    try {
+      const cleanNumber = cleanPhoneNumber(msisdn);
+      const response = await axios.post(
+        `${BASE_URL}/id-lookup`,
+        {
+          id_number: idNumber,
+          msisdn: cleanNumber,
+        },
+        {
+          headers: headers,
+          timeout: 30000,
+        }
+      );
+
+      console.log('ID Lookup response:', response.data);
+
+      const data = response.data;
+      if (data.name || data.success) {
+        return {
+          success: true,
+          message: data.message || 'Valid ID',
+          name: data.name,
+          idNumber: idNumber,
+          pin: data.pin // Some endpoints return PIN here
+        };
+      }
+    } catch (error: any) {
+      console.error('ID Lookup error:', error.response?.data || error.message);
+    }
+  }
+
+  // Fallback: Use GUI Lookup API
   try {
-    // Primary: Use GUI Lookup API
     const response = await axios.get(
       `${ITAX_URL}/gui-lookup`,
       {
@@ -151,15 +206,13 @@ export async function lookupById(
           gui: idNumber,
           tax_payer_type: 'KE',
         },
-        headers: {
-          'x-source-for': 'whatsapp',
-        },
+        headers: headers,
         timeout: 30000,
       }
     );
 
     const data = response.data;
-    console.log('GUI Lookup response:', data);
+    console.log('GUI Lookup response (fallback):', data);
 
     if (data.Status === 'OK' || data.ResponseCode === '30000' || data.Message === 'Valid ID') {
       return {
@@ -177,47 +230,12 @@ export async function lookupById(
         message: data.Message || 'Invalid ID number',
       };
     }
-  } catch (primaryError: any) {
-    console.error('GUI Lookup error:', primaryError.response?.data || primaryError.message);
-
-    // Fallback: Try ID Lookup API
-    if (msisdn) {
-      try {
-        const cleanNumber = cleanPhoneNumber(msisdn);
-        const fallbackResponse = await axios.post(
-          `${BASE_URL}/id-lookup`,
-          {
-            id_number: idNumber,
-            msisdn: cleanNumber,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-forwarded-for': 'triple_2_ussd',
-            },
-            timeout: 30000,
-          }
-        );
-
-        console.log('ID Lookup fallback response:', fallbackResponse.data);
-
-        const fallbackData = fallbackResponse.data;
-        if (fallbackData.name || fallbackData.success) {
-          return {
-            success: true,
-            message: fallbackData.message || 'Valid ID',
-            name: fallbackData.name,
-            idNumber: idNumber,
-          };
-        }
-      } catch (fallbackError: any) {
-        console.error('ID Lookup fallback error:', fallbackError.response?.data || fallbackError.message);
-      }
-    }
+  } catch (error: any) {
+    console.error('GUI Lookup error:', error.response?.data || error.message);
 
     return {
       success: false,
-      message: primaryError.response?.data?.message || 'Failed to lookup ID',
+      message: error.response?.data?.message || 'Failed to lookup ID',
     };
   }
 }
@@ -233,6 +251,7 @@ export async function submitPinRegistration(
   msisdn: string
 ): Promise<PinRegistrationResult> {
   const cleanNumber = cleanPhoneNumber(msisdn);
+  const headers = await getAuthHeaders();
 
   console.log('Submitting PIN registration:', {
     type,
@@ -251,10 +270,7 @@ export async function submitPinRegistration(
         id_number: idNumber,
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-forwarded-for': 'triple_2_ussd',
-        },
+        headers: headers,
         timeout: 60000, // Longer timeout for registration
       }
     );
@@ -290,6 +306,7 @@ export async function initiateSession(
   type: 'citizen' | 'resident'
 ): Promise<{ success: boolean; message: string; sessionId?: string }> {
   const cleanNumber = cleanPhoneNumber(msisdn);
+  const headers = await getAuthHeaders();
 
   try {
     const response = await axios.post(
@@ -300,10 +317,7 @@ export async function initiateSession(
         type: type,
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-forwarded-for': 'triple_2_ussd',
-        },
+        headers: headers,
         timeout: 30000,
       }
     );

@@ -10,7 +10,7 @@ echo ""
 
 # 1. GUI Lookup (ID Validation)
 echo "=== 1. GUI LOOKUP (ID Validation) ==="
-echo "Used in: /pin-registration/kenyan/identity"
+echo "Used in: /kenyan/identity"
 echo ""
 echo "curl -X GET 'https://kratest.pesaflow.com/api/itax/gui-lookup?gui=36447996&tax_payer_type=KE' \\"
 echo "  -H 'x-source-for: whatsapp'"
@@ -23,7 +23,7 @@ echo ""
 
 # 2. ID Lookup with Phone Validation
 echo "=== 2. ID LOOKUP (with phone validation) ==="
-echo "Used in: /pin-registration/kenyan/identity (fallback)"
+echo "Used in: /kenyan/identity (fallback)"
 echo ""
 echo "curl -X POST 'https://kratest.pesaflow.com/api/ussd/id-lookup' \\"
 echo "  -H 'Content-Type: application/json' \\"
@@ -57,7 +57,7 @@ echo ""
 
 # 4. PIN Registration (Citizen)
 echo "=== 4. PIN REGISTRATION (Citizen) ==="
-echo "Used in: /pin-registration/kenyan/declaration"
+echo "Used in: /kenyan/declaration"
 echo ""
 echo "curl -X POST 'https://kratest.pesaflow.com/api/ussd/pin-registration' \\"
 echo "  -H 'Content-Type: application/json' \\"
@@ -74,7 +74,7 @@ echo ""
 
 # 5. PIN Registration (Resident/Non-Kenyan)
 echo "=== 5. PIN REGISTRATION (Resident/Non-Kenyan) ==="
-echo "Used in: /pin-registration/non-kenyan/declaration"
+echo "Used in: /non-kenyan/declaration"
 echo ""
 echo "curl -X POST 'https://kratest.pesaflow.com/api/ussd/pin-registration' \\"
 echo "  -H 'Content-Type: application/json' \\"
